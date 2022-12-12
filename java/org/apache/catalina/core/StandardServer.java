@@ -782,10 +782,11 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      */
     @Override
     protected void startInternal() throws LifecycleException {
-
+        // 触发生命周期事件
         fireLifecycleEvent(CONFIGURE_START_EVENT, null);
+        // 当前 server 设置 LifecycleState
         setState(LifecycleState.STARTING);
-
+        // 启动全局命名资源
         globalNamingResources.start();
 
         // Start our defined Services
@@ -823,28 +824,34 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     /**
      * Invoke a pre-startup initialization. This is used to allow connectors
      * to bind to restricted ports under Unix operating environments.
+     *
+     * 初始化 server 实例
      */
     @Override
     protected void initInternal() throws LifecycleException {
-
+        // 调用父类 LifecycleMBeanBase#initInternal 方法
         super.initInternal();
 
         // Register global String cache
         // Note although the cache is global, if there are multiple Servers
         // present in the JVM (may happen when embedding) then the same cache
         // will be registered under multiple names
+        // 注册全局字符串缓存，如果有多个 Server 则会注册多个字符串缓存对象
         onameStringCache = register(new StringCache(), "type=StringCache");
 
         // Register the MBeanFactory
+        // 注册 MBeanFactory
         MBeanFactory factory = new MBeanFactory();
         factory.setContainer(this);
         onameMBeanFactory = register(factory, "type=MBeanFactory");
 
         // Register the naming resources
+        // 注册全局命名资源并初始化，该全局命名资源配置在 server.xml 中
         globalNamingResources.init();
 
         // Populate the extension validator with JARs from common and shared
         // class loaders
+        // 使用 catalina 的父加载器校验系统 JAR 包文件
         if (getCatalina() != null) {
             ClassLoader cl = getCatalina().getParentClassLoader();
             // Walk the class loader hierarchy. Stop at the system class loader.
@@ -869,7 +876,11 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
                 cl = cl.getParent();
             }
         }
-        // Initialize our defined Services
+        /*
+         * Initialize our defined Services
+         * 初始化自定义的 service
+         * @see StandardService#initInternal
+         */
         for (Service service : services) {
             service.init();
         }

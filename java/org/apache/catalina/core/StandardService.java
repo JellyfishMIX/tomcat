@@ -541,17 +541,21 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * Invoke a pre-startup initialization. This is used to allow connectors
      * to bind to restricted ports under Unix operating environments.
+     *
+     * 初始化自定义的 service
      */
     @Override
     protected void initInternal() throws LifecycleException {
 
         super.initInternal();
 
+        // 初始化 StandardEngine
         if (engine != null) {
             engine.init();
         }
 
         // Initialize any Executors
+        // 初始化 service 关联的 executor 线程池(主要是 StandardThreadExecutor)
         for (Executor executor : findExecutors()) {
             if (executor instanceof JmxEnabled) {
                 ((JmxEnabled) executor).setDomain(getDomain());
@@ -560,9 +564,11 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         }
 
         // Initialize mapper listener
+        // 初始化 mapperListener
         mapperListener.init();
 
         // Initialize our defined Connectors
+        // 初始化所有关联的 connector
         synchronized (connectorsLock) {
             for (Connector connector : connectors) {
                 try {

@@ -140,7 +140,10 @@ public final class Bootstrap {
 
     // -------------------------------------------------------- Private Methods
 
-
+    /**
+     * 初始化类加载器
+     * 会创建三种类加载器，catalinaLoader 与 sharedLoader 的父类加载器都是 commonLoader。
+     */
     private void initClassLoaders() {
         try {
             commonLoader = createClassLoader("common", null);
@@ -247,20 +250,24 @@ public final class Bootstrap {
 
     /**
      * Initialize daemon.
+     *
+     * 初始化 catalinaDaemon(Catalina 类的实例)
+     *
      * @throws Exception Fatal initialization error
      */
     public void init() throws Exception {
-
+        // 初始化类加载器。会创建三种类加载器，catalinaLoader 与 sharedLoader 的父类加载器都是 commonLoader。
         initClassLoaders();
-
+        // 设置当前线程的上下文类加载器为 catalinaLoader
         Thread.currentThread().setContextClassLoader(catalinaLoader);
-
+        // 使用 catalinaLoader 类加载器，加载 coyote, tomcat, javax 等各包的类。
         SecurityClassLoad.securityClassLoad(catalinaLoader);
 
         // Load our startup class and call its process() method
         if (log.isDebugEnabled()) {
             log.debug("Loading startup class");
         }
+        // 使用 catalinaLoader 加载 org.apache.catalina.startup.Catalina 类，通过反射实例化
         Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
         Object startupInstance = startupClass.getConstructor().newInstance();
 
@@ -275,14 +282,17 @@ public final class Bootstrap {
         paramValues[0] = sharedLoader;
         Method method =
             startupInstance.getClass().getMethod(methodName, paramTypes);
+        // 通过反射调用 Catalina#setParentClassLoader 方法，把 sharedLoader 设置为 catalina 实例的父加载器。
         method.invoke(startupInstance, paramValues);
-
+        // catalina 实例赋值给 Bootstrap 类的成员属性 catalinaDaemon
         catalinaDaemon = startupInstance;
     }
 
 
     /**
      * Load daemon.
+     *
+     * 加载 server 实例
      */
     private void load(String[] arguments) throws Exception {
 
@@ -304,6 +314,7 @@ public final class Bootstrap {
         if (log.isDebugEnabled()) {
             log.debug("Calling startup class " + method);
         }
+        // 通过反射调用 Catalina#load() 方法
         method.invoke(catalinaDaemon, param);
     }
 
@@ -336,13 +347,16 @@ public final class Bootstrap {
 
     /**
      * Start the Catalina daemon.
+     *
+     * 启动 catalina
+     *
      * @throws Exception Fatal start error
      */
     public void start() throws Exception {
         if (catalinaDaemon == null) {
             init();
         }
-
+        // 通过反射调用 Catalina#start() 方法，主要作用是启动 standardServer 实例，让服务器能监听端口, 接收新的请求。
         Method method = catalinaDaemon.getClass().getMethod("start", (Class [])null);
         method.invoke(catalinaDaemon, (Object [])null);
     }
@@ -442,8 +456,10 @@ public final class Bootstrap {
         synchronized (daemonLock) {
             if (daemon == null) {
                 // Don't set daemon until init() has completed
+                // 创建 Bootstrap 实例
                 Bootstrap bootstrap = new Bootstrap();
                 try {
+                    // 初始化 catalinaDaemon(Catalina 类的实例)
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
@@ -482,6 +498,7 @@ public final class Bootstrap {
             } else if (command.equals("stop")) {
                 daemon.stopServer(args);
             } else if (command.equals("configtest")) {
+                // Catalina#load()
                 daemon.load(args);
                 if (null == daemon.getServer()) {
                     System.exit(1);

@@ -124,7 +124,10 @@ public abstract class LifecycleBase implements Lifecycle {
         }
     }
 
-
+    /**
+     * LifecycleBase 初始化，应用了模版方法模式，关键的 initInternal() 方法由子类实现。
+     * Server 接口的默认实现是 StandardServer
+     */
     @Override
     public final synchronized void init() throws LifecycleException {
         if (!state.equals(LifecycleState.NEW)) {
@@ -132,8 +135,11 @@ public abstract class LifecycleBase implements Lifecycle {
         }
 
         try {
+            // 更新 LifecycleBase 的 state 为 INITIALIZING，触发 LifecycleEvent 生命周期事件。
             setStateInternal(LifecycleState.INITIALIZING, null, false);
+            // 调用 LifecycleBase 的具体实现进行初始化。如果是 Server 接口的默认实现 StandardServer, 调用的是 StandardServer#initInternal()
             initInternal();
+            // 更新 LifecycleBase 的 state 为 INITIALIZED，触发 LifecycleEvent 生命周期事件。
             setStateInternal(LifecycleState.INITIALIZED, null, false);
         } catch (Throwable t) {
             handleSubClassException(t, "lifecycleBase.initFail", toString());

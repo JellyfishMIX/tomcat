@@ -1072,7 +1072,9 @@ public class Connector extends LifecycleMBeanBase  {
         }
     }
 
-
+    /**
+     * connector 连接器初始化
+     */
     @SuppressWarnings("deprecation")
     @Override
     protected void initInternal() throws LifecycleException {
@@ -1080,14 +1082,17 @@ public class Connector extends LifecycleMBeanBase  {
         super.initInternal();
 
         // Initialize adapter
+        // 创建并初始化 coyote 适配器，关联至协议处理器 protocolHandler 中
         adapter = new CoyoteAdapter(this);
         protocolHandler.setAdapter(adapter);
 
         // Make sure parseBodyMethodsSet has a default
+        // parseBodyMethodsSet 赋默认值，默认值为 POST 方法
         if (null == parseBodyMethodsSet) {
             setParseBodyMethods(getParseBodyMethods());
         }
 
+        // apr 协议处理器边界条件处理。ARP(Address Resolution Protocol)，地址解析协议，根据 ip 地址获取物理地址的一个 TCP/IP 协议。
         if (protocolHandler.isAprRequired() && !AprLifecycleListener.isInstanceCreated()) {
             throw new LifecycleException(sm.getString("coyoteConnector.protocolHandlerNoAprListener",
                     getProtocolHandlerClassName()));
@@ -1096,6 +1101,7 @@ public class Connector extends LifecycleMBeanBase  {
             throw new LifecycleException(sm.getString("coyoteConnector.protocolHandlerNoAprLibrary",
                     getProtocolHandlerClassName()));
         }
+        // 判断 apr 协议处理器是否开启 SSL
         if (AprLifecycleListener.isAprAvailable() && AprLifecycleListener.getUseOpenSSL() &&
                 protocolHandler instanceof AbstractHttp11JsseProtocol) {
             AbstractHttp11JsseProtocol<?> jsseProtocolHandler =
@@ -1108,6 +1114,7 @@ public class Connector extends LifecycleMBeanBase  {
         }
 
         try {
+            // 协议处理器执行初始化(protocolHandler 是在 server.xml 解析时创建的)
             protocolHandler.init();
         } catch (Exception e) {
             throw new LifecycleException(

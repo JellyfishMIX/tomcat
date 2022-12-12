@@ -534,6 +534,8 @@ public class Catalina {
 
     /**
      * Start a new server instance.
+     *
+     * 加载一个 server 实例
      */
     public void load() {
 
@@ -550,6 +552,7 @@ public class Catalina {
         initNaming();
 
         // Create and execute our Digester
+        // 创建 Digester 实例(server.xml 配置文件解析器)
         Digester digester = createStartDigester();
 
         InputSource inputSource = null;
@@ -615,6 +618,7 @@ public class Catalina {
             try {
                 inputSource.setByteStream(inputStream);
                 digester.push(this);
+                // 使用 digester 解析配置文件，创建 server 实例。默认创建的是 StandardServer 实例。
                 digester.parse(inputSource);
             } catch (SAXParseException spe) {
                 log.warn("Catalina.start using " + getConfigFile() + ": " +
@@ -634,6 +638,7 @@ public class Catalina {
             }
         }
 
+        // server 实例绑定当前 catalina 实例，设置当前 catalina 的根路径位置
         getServer().setCatalina(this);
         getServer().setCatalinaHome(Bootstrap.getCatalinaHomeFile());
         getServer().setCatalinaBase(Bootstrap.getCatalinaBaseFile());
@@ -643,6 +648,10 @@ public class Catalina {
 
         // Start the new server
         try {
+            /*
+             * 调用 server#init 方法进行初始化。server 实例默认是 StandardServer
+             * 应用了模版方法模式，实际调用的是 LifecycleBase#init() 模版方法
+             */
             getServer().init();
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
@@ -676,9 +685,11 @@ public class Catalina {
 
     /**
      * Start a new server instance.
+     *
+     * 启动一个新的 server 实例(server 默认实现是 standardServer)，让服务器能监听端口, 接收请求。
      */
     public void start() {
-
+        // 如果当前 catalina 中还没有 server 实例，则调用 Catalina#load 方法加载一个 server 实例
         if (getServer() == null) {
             load();
         }
@@ -692,6 +703,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            // 调用 Server#strat() 方法，启动 server。这也是 LifecycleBase 模版方法，Server 的定制化逻辑 @see StandardServer#startInternal
             getServer().start();
         } catch (LifecycleException e) {
             log.fatal(sm.getString("catalina.serverStartFail"), e);
@@ -709,6 +721,7 @@ public class Catalina {
         }
 
         // Register shutdown hook
+        // 注册关闭回调函数，使得关闭 JVM 时能销毁 catalina 实例，日志管理器等组件。
         if (useShutdownHook) {
             if (shutdownHook == null) {
                 shutdownHook = new CatalinaShutdownHook();
@@ -726,7 +739,9 @@ public class Catalina {
         }
 
         if (await) {
+            // 创建关闭 tomcat 的 ServerSocket 实例并监听对应端口，等待接收关闭命令。
             await();
+            // 停止并销毁 standardServer 实例及其所有组件
             stop();
         }
     }
