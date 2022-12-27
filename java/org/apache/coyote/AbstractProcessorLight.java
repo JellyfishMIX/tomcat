@@ -36,19 +36,23 @@ public abstract class AbstractProcessorLight implements Processor {
 
     private Set<DispatchType> dispatches = new CopyOnWriteArraySet<>();
 
-
+    /**
+     * 模板方法，在父类中维护一个 SocketState 状态机，根据状态执行对应方法。http 请求和 service 方法相关，而 websocket 和 dispatch 方法相关。
+     */
     @Override
     public SocketState process(SocketWrapperBase<?> socketWrapper, SocketEvent status)
             throws IOException {
 
         SocketState state = SocketState.CLOSED;
         Iterator<DispatchType> dispatches = null;
+        // do while 进入 SocketState 状态机
         do {
             if (dispatches != null) {
                 DispatchType nextDispatch = dispatches.next();
                 if (getLog().isDebugEnabled()) {
                     getLog().debug("Processing dispatch type: [" + nextDispatch + "]");
                 }
+                // webSocket 才会用到 dispatch 的逻辑，对于 http 请求无需关心
                 state = dispatch(nextDispatch.getSocketStatus());
                 if (!dispatches.hasNext()) {
                     state = checkForPipelinedData(state, socketWrapper);
@@ -62,6 +66,7 @@ public abstract class AbstractProcessorLight implements Processor {
                 // Extra write event likely after async, ignore
                 state = SocketState.LONG;
             } else if (status == SocketEvent.OPEN_READ) {
+                // AbstractProcessorLight#service 方法的子类实现处理 http 请求
                 state = service(socketWrapper);
             } else if (status == SocketEvent.CONNECT_FAIL) {
                 logAccess(socketWrapper);

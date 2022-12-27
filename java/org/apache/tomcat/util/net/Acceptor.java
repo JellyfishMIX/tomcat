@@ -63,7 +63,9 @@ public class Acceptor<U> implements Runnable {
         return threadName;
     }
 
-
+    /**
+     * acceptor 使用独立的线程，用于接收 socket 并向后传递。注意这里接收的 socket 只是连接，不是具体的请求数据。
+     */
     @SuppressWarnings("deprecation")
     @Override
     public void run() {
@@ -73,6 +75,7 @@ public class Acceptor<U> implements Runnable {
 
         try {
             // Loop until we receive a shutdown command
+            // 如果 endpoint 处于运行中，无限循环
             while (!stopCalled) {
 
                 // Loop if endpoint is paused.
@@ -87,6 +90,7 @@ public class Acceptor<U> implements Runnable {
                 // < 1ms       - tight loop
                 // 1ms to 10ms - 1ms sleep
                 // > 10ms      - 10ms sleep
+                // 如果 endpoint 处于暂停状态，则无限睡眠
                 while (endpoint.isPaused() && !stopCalled) {
                     if (state != AcceptorState.PAUSED) {
                         pauseStart = System.nanoTime();
@@ -107,6 +111,7 @@ public class Acceptor<U> implements Runnable {
                     }
                 }
 
+                // 如果 endpoint 已经停止则退出无限循环
                 if (stopCalled) {
                     break;
                 }
@@ -114,6 +119,7 @@ public class Acceptor<U> implements Runnable {
 
                 try {
                     //if we have reached max connections, wait
+                    // 如果已经达到最大连接，则等待直到有空闲连接数
                     endpoint.countUpOrAwaitConnection();
 
                     // Endpoint might have been paused while waiting for latch
@@ -124,8 +130,13 @@ public class Acceptor<U> implements Runnable {
 
                     U socket = null;
                     try {
-                        // Accept the next incoming connection from the server
-                        // socket
+                        /*
+                         * Accept the next incoming connection from the server socket
+                         *
+                         * 从 endpoint 获取 socket，是否阻塞要看具体实现。
+                         * 注意这里阻塞不影响"NIO 非阻塞"，因为"NIO 非阻塞"指的是处理请求的线程不用阻塞地等待获取请求。
+                         * 这里是 acceptor 线程，acceptor 线程专门用于接收请求并向后传递，acceptor 线程是否阻塞与"NIO 非阻塞"无关。
+                         */
                         socket = endpoint.serverSocketAccept();
                     } catch (Exception ioe) {
                         // We didn't get a socket
@@ -143,13 +154,16 @@ public class Acceptor<U> implements Runnable {
                     errorDelay = 0;
 
                     // Configure the socket
+                    // endpoint 正常运行
                     if (!stopCalled && !endpoint.isPaused()) {
                         // setSocketOptions() will hand the socket off to
                         // an appropriate processor if successful
+                        // 调用 setSocketOptions 方法，将获取到的 socket 传递至 endpoint
                         if (!endpoint.setSocketOptions(socket)) {
                             endpoint.closeSocket(socket);
                         }
                     } else {
+                        // endpoint 未正常运行，则销毁 socket
                         endpoint.destroySocket(socket);
                     }
                 } catch (Throwable t) {

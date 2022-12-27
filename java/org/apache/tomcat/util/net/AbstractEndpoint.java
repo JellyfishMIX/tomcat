@@ -1173,10 +1173,12 @@ public abstract class AbstractEndpoint<S,U> {
                 sc = processorCache.pop();
             }
             if (sc == null) {
+                // 根据 socket 和 SocketEvent 获得 socketProcessorBase
                 sc = createSocketProcessor(socketWrapper, event);
             } else {
                 sc.reset(socketWrapper, event);
             }
+            // 使用线程池执行 socketProcessorBase，线程池的来源请见 AbstractEndpoint#createExecutor 方法
             Executor executor = getExecutor();
             if (dispatch && executor != null) {
                 executor.execute(sc);

@@ -492,6 +492,7 @@ public class Http11Processor extends AbstractProcessor {
     @Override
     public SocketState service(SocketWrapperBase<?> socketWrapper)
         throws IOException {
+        // 初始化一些参数，略过
         RequestInfo rp = request.getRequestProcessor();
         rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
@@ -509,6 +510,7 @@ public class Http11Processor extends AbstractProcessor {
                 sendfileState == SendfileState.DONE && !endpoint.isPaused()) {
 
             // Parsing the request header
+            // 验证设置 request 等流程略过
             try {
                 if (!inputBuffer.parseRequestLine(keptAlive)) {
                     if (inputBuffer.getParsingRequestLinePhase() == -1) {
@@ -636,6 +638,7 @@ public class Http11Processor extends AbstractProcessor {
             if (getErrorState().isIoAllowed()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+                    // 获得 adapter 实例，调用 Adapter#service 方法。这里的 adapter 对象实例是 CoyoteAdapter 类型。
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both
@@ -669,7 +672,7 @@ public class Http11Processor extends AbstractProcessor {
                     getAdapter().log(request, response, 0);
                 }
             }
-
+            // SocketState 判断略过
             // Finish the handling of the request
             rp.setStage(org.apache.coyote.Constants.STAGE_ENDINPUT);
             if (!isAsync()) {
@@ -710,6 +713,7 @@ public class Http11Processor extends AbstractProcessor {
 
         rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
 
+        // SocketState 返回略过
         if (getErrorState().isError() || (endpoint.isPaused() && !isAsync())) {
             return SocketState.CLOSED;
         } else if (isAsync()) {

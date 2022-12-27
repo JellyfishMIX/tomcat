@@ -37,6 +37,7 @@ public abstract class SocketProcessorBase<S> implements Runnable {
 
     @Override
     public final void run() {
+        // 加 socket 维度的锁
         synchronized (socketWrapper) {
             // It is possible that processing may be triggered for read and
             // write at the same time. The sync above makes sure that processing
@@ -46,6 +47,7 @@ public abstract class SocketProcessorBase<S> implements Runnable {
             if (socketWrapper.isClosed()) {
                 return;
             }
+            // 对 socket 具体的处理
             doRun();
         }
     }

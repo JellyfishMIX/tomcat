@@ -323,6 +323,7 @@ public class CoyoteAdapter implements Adapter {
     public void service(org.apache.coyote.Request req, org.apache.coyote.Response res)
             throws Exception {
 
+        // 将 org.apache.coyote 包下的 Request 和 Response, 转换成 org.apache.catalina.connector 包下的类型
         Request request = (Request) req.getNote(ADAPTER_NOTES);
         Response response = (Response) res.getNote(ADAPTER_NOTES);
 
@@ -358,12 +359,14 @@ public class CoyoteAdapter implements Adapter {
         try {
             // Parse and set Catalina and configuration specific
             // request parameters
+            // 解析并设置 Catalina 核心属性和特定请求配置，如 host, context。根据请求路径来判断由哪个 StandardWrapper 处理这个请求也是在这里面完成的。
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
                 request.setAsyncSupported(
                         connector.getService().getContainer().getPipeline().isAsyncSupported());
                 // Calling the container
+                // 调用进 Container 中，这里是关键，由 Connector 模块调用进了 Container，完成两者的适配
                 connector.getService().getContainer().getPipeline().getFirst().invoke(
                         request, response);
             }
