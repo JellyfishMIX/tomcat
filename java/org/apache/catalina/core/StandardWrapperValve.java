@@ -88,6 +88,7 @@ final class StandardWrapperValve extends ValveBase {
         throws IOException, ServletException {
 
         // Initialize local variables we may need
+        // 初始化一些局部变量
         boolean unavailable = false;
         Throwable throwable = null;
         // This should be a Request attribute...
@@ -98,6 +99,7 @@ final class StandardWrapperValve extends ValveBase {
         Context context = (Context) wrapper.getParent();
 
         // Check for the application being marked unavailable
+        // 检查当前应用的状态是否可用
         if (!context.getState().isAvailable()) {
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                            sm.getString("standardContext.isUnavailable"));
@@ -113,6 +115,7 @@ final class StandardWrapperValve extends ValveBase {
         }
 
         // Allocate a servlet instance to process this request
+        // 调用 servlet 的 allocate 方法，为请求分配一个 servlet 实例
         try {
             if (!unavailable) {
                 servlet = wrapper.allocate();
@@ -145,11 +148,13 @@ final class StandardWrapperValve extends ValveBase {
         request.setAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR,
                 requestPathMB);
         // Create the filter chain for this request
+        // 为此请求创建 ApplicationFilterChain
         ApplicationFilterChain filterChain =
                 ApplicationFilterFactory.createFilterChain(request, wrapper, servlet);
 
         // Call the filter chain for this request
         // NOTE: This also calls the servlet's service() method
+        // 为此请求调用 ApplicationFilterChain 的 doFilter 方法，在 filterChain 中会调用 servlet 的 service 方法处理请求
         Container container = this.container;
         try {
             if ((servlet != null) && (filterChain != null)) {
@@ -173,6 +178,7 @@ final class StandardWrapperValve extends ValveBase {
                     if (request.isAsyncDispatching()) {
                         request.getAsyncContextInternal().doInternalDispatch();
                     } else {
+                        // 核心方法
                         filterChain.doFilter
                             (request.getRequest(), response.getResponse());
                     }

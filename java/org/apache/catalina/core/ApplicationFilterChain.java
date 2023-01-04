@@ -172,6 +172,8 @@ public final class ApplicationFilterChain implements FilterChain {
         throws IOException, ServletException {
 
         // Call the next filter if there is one
+        // n 是此 filterChain 上 filter 的数量，pos 是当前执行到的 filter 的序号
+        // 没执行完所有 filter，则继续调用下一个 filter 的 doFilter 方法处理请求
         if (pos < n) {
             ApplicationFilterConfig filterConfig = filters[pos++];
             try {
@@ -203,6 +205,7 @@ public final class ApplicationFilterChain implements FilterChain {
         }
 
         // We fell off the end of the chain -- call the servlet instance
+        // 执行完所有 filter，到达 filterChain 的末尾，调用 servlet 实例的 service 方法处理请求
         try {
             if (ApplicationDispatcher.WRAP_SAME_OBJECT) {
                 lastServicedRequest.set(request);

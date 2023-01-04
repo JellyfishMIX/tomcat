@@ -89,6 +89,8 @@ final class StandardHostValve extends ValveBase {
      * based on the specified request URI.  If no matching Context can
      * be found, return an appropriate HTTP error.
      *
+     * 边界条件处理，然后调用 contextPipeline 的 valve 链表
+     *
      * @param request Request to be processed
      * @param response Response to be produced
      *

@@ -49,6 +49,8 @@ final class StandardEngineValve extends ValveBase {
      * based on the requested server name.  If no matching Host can
      * be found, return an appropriate HTTP error.
      *
+     * 边界条件处理，然后调用 hostPipeline 的 valve 链表
+     *
      * @param request Request to be processed
      * @param response Response to be produced
      *

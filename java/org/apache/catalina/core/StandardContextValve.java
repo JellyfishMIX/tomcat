@@ -53,6 +53,8 @@ final class StandardContextValve extends ValveBase {
      * based on the specified request URI.  If no matching Wrapper can
      * be found, return an appropriate HTTP error.
      *
+     * 禁止访问 WEB-INF 或者 META-INF 路径下的资源，ack 确认请求。然后调用 wrapperPipeline 的 valve 链表。
+     *
      * @param request Request to be processed
      * @param response Response to be produced
      *
@@ -64,6 +66,7 @@ final class StandardContextValve extends ValveBase {
         throws IOException, ServletException {
 
         // Disallow any direct access to resources under WEB-INF or META-INF
+        // 禁止访问 WEB-INF 或者 META-INF 路径下的资源
         MessageBytes requestPathMB = request.getRequestPathMB();
         if ((requestPathMB.startsWithIgnoreCase("/META-INF/", 0))
                 || (requestPathMB.equalsIgnoreCase("/META-INF"))
@@ -81,6 +84,7 @@ final class StandardContextValve extends ValveBase {
         }
 
         // Acknowledge the request
+        // ack 确认请求
         try {
             response.sendAcknowledgement(ContinueResponseTiming.IMMEDIATELY);
         } catch (IOException ioe) {
@@ -94,6 +98,7 @@ final class StandardContextValve extends ValveBase {
         if (request.isAsyncSupported()) {
             request.setAsyncSupported(wrapper.getPipeline().isAsyncSupported());
         }
+        // 调用 wrapperPipeline 的 valve 链表
         wrapper.getPipeline().getFirst().invoke(request, response);
     }
 }
