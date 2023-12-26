@@ -59,6 +59,7 @@ public final class ApplicationFilterFactory {
         }
 
         // Create and initialize a filter chain object
+        // 创建一个 ApplicationFilterChain
         ApplicationFilterChain filterChain = null;
         if (request instanceof Request) {
             Request req = (Request) request;
@@ -82,6 +83,7 @@ public final class ApplicationFilterFactory {
 
         // Acquire the filter mappings for this Context
         StandardContext context = (StandardContext) wrapper.getParent();
+        // 获取 ServletContext 中的 filterMap
         FilterMap filterMaps[] = context.findFilterMaps();
 
         // If there are no filter mappings, we are done
@@ -102,6 +104,7 @@ public final class ApplicationFilterFactory {
         String servletName = wrapper.getName();
 
         // Add the relevant path-mapped filters to this filter chain
+        // 遍历 filterMap 向 filterChain 中添加 filter
         for (FilterMap filterMap : filterMaps) {
             if (!matchDispatcher(filterMap, dispatcher)) {
                 continue;

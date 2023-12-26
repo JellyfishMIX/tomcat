@@ -781,6 +781,11 @@ public class ApplicationContext implements ServletContext {
     }
 
 
+    /**
+     * 添加一个 filter
+     * 注意这里只添加了只添加了 filterDefs。
+     * 使用方还需要调用返回结果 FilterRegistration.Dynamic#addMappingForUrlPatterns 或 addMappingForServletNames 方法，把 filterMap 添加进 ServletContext。
+     */
     private FilterRegistration.Dynamic addFilter(String filterName,
             String filterClass, Filter filter) throws IllegalStateException {
 
@@ -803,6 +808,7 @@ public class ApplicationContext implements ServletContext {
         if (filterDef == null) {
             filterDef = new FilterDef();
             filterDef.setFilterName(filterName);
+            // 添加一个 filterDef
             context.addFilterDef(filterDef);
         } else {
             if (filterDef.getFilterName() != null &&
@@ -818,6 +824,7 @@ public class ApplicationContext implements ServletContext {
             filterDef.setFilter(filter);
         }
 
+        // 返回创建的 ApplicationFilterRegistration
         return new ApplicationFilterRegistration(filterDef, context);
     }
 
